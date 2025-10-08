@@ -1,0 +1,20 @@
+# Node / Frontend
+node_modules/
+.next/
+.cache/
+dist/
+backend/
+# Python / Backend
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+venv/
+.env
+
+# Models / Large files
+**/models/
+*.bin
+*.pt
+*.safetensors
+*.ckpt
