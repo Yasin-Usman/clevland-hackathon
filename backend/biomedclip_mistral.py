@@ -1,10 +1,15 @@
+import os
+import io
+import sys
+import torch
 import ollama
 import warnings
 warnings.filterwarnings("ignore", category=FutureWarning)
-from open_clip import create_model_from_pretrained, get_tokenizer
-from functools import lru_cache
 from PIL import Image
-import torch
+from functools import lru_cache
+from open_clip import create_model_from_pretrained, get_tokenizer
+
+os.environ['HF_HUB_DISABLE_XET'] = '1'
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -13,8 +18,11 @@ torch.set_grad_enabled(False)
 torch.backends.cudnn.benchmark = True
 
 model_name = "hf-hub:microsoft/BiomedCLIP-PubMedBERT_256-vit_base_patch16_224"
+# model_name = "./micrbosoft/BiomedCLIP-PubMedBERT_256-vit_base_patch16_224"
+cache_dir = os.path.expanduser("~/.cache/biomedclip")
+os.makedirs(cache_dir, exist_ok=True)
 model, preprocess = create_model_from_pretrained(
-    model_name, cache_dir="./models")
+    model_name, cache_dir=cache_dir)
 tokenizer = get_tokenizer(model_name)
 
 model = model.to(device).eval()
@@ -34,7 +42,167 @@ labels = [
     "cardiomegaly in x-ray",
     "bone lesion in x-ray",
     "joint dislocation in x-ray",
-    "spinal deformity in x-ray"
+    "spinal deformity in x-ray",
+
+    # Wound Types
+    "open wound",
+    "closed wound",
+    "infected wound",
+    "healed wound",
+    "surgical wound",
+    "bite wound",
+    "crush injury",
+    "skin tear",
+    "abrasion",
+    "laceration",
+    "puncture wound",
+    "incision",
+    "dehisced wound",
+    "traumatic wound",
+
+    # Burns
+    "burn",
+    "first-degree burn",
+    "second-degree burn",
+    "third-degree burn",
+
+    # Healing Features
+    "granulation tissue",
+    "epithelialization",
+    "scab",
+    "slough",
+    "eschar",
+    "necrosis",
+    "maceration",
+    "dry wound bed",
+    "moist wound bed",
+    "hypergranulation",
+
+    # Discharge & Inflammation
+    "purulent discharge",
+    "serous drainage",
+    "serosanguineous fluid",
+    "bloody discharge",
+    "pus",
+    "erythema",
+    "swelling",
+    "edema",
+    "foul odor",
+    "skin inflammation",
+
+    # Lesions
+    "ulcer",
+    "erosion",
+    "papule",
+    "pustule",
+    "vesicle",
+    "nodule",
+    "plaque",
+    "macule",
+    "patch",
+    "bullae",
+    "wheal",
+    "crust",
+    "scale",
+    "excoriation",
+    "lichenification",
+    "scar",
+    "atrophic scar",
+    "hypertrophic scar",
+    "keloid",
+
+    # Infections
+    "abscess",
+    "cellulitis",
+    "impetigo",
+    "folliculitis",
+    "fungal infection",
+    "candidiasis",
+    "tinea corporis",
+    "tinea pedis",
+    "herpes simplex",
+    "herpes zoster",
+    "molluscum contagiosum",
+    "warts",
+    "scabies",
+
+    # Chronic Wounds
+    "diabetic ulcer",
+    "venous ulcer",
+    "arterial ulcer",
+    "pressure ulcer",
+    "stage 1 pressure ulcer",
+    "stage 2 pressure ulcer",
+    "stage 3 pressure ulcer",
+    "stage 4 pressure ulcer",
+    "unstageable ulcer",
+    "deep tissue injury",
+
+    # Dermatitis & Skin Conditions
+    "eczema",
+    "atopic dermatitis",
+    "contact dermatitis",
+    "seborrheic dermatitis",
+    "psoriasis",
+    "rosacea",
+    "urticaria",
+    "acne",
+    "hidradenitis suppurativa",
+    "chilblains",
+    "ichthyosis",
+
+    # Pigment & Texture Disorders
+    "hyperpigmentation",
+    "hypopigmentation",
+    "discolored skin",
+    "shiny skin",
+    "peeling skin",
+    "dry skin",
+    "flaky skin",
+    "thickened skin",
+    "intact skin",
+    "inflamed area",
+    "fibrotic tissue",
+
+    # Vascular Findings
+    "cyanosis",
+    "petechiae",
+    "purpura",
+    "ecchymosis",
+    "bruise",
+    "hematoma",
+    "telangiectasia",
+    "spider veins",
+    "varicose veins",
+
+    # Oncology & Growths
+    "melanoma",
+    "basal cell carcinoma",
+    "squamous cell carcinoma",
+    "actinic keratosis",
+    "seborrheic keratosis",
+    "dysplastic nevus",
+    "nevus",
+    "lentigo",
+    "benign mole",
+    "skin tag",
+    "cyst",
+
+    # Post-surgical & Treatment Sites
+    "surgical scar",
+    "skin graft",
+    "donor site",
+    "flap site",
+    "stapled incision",
+    "sutures",
+    "drain site",
+
+    # Medical Devices & Dressings
+    "wound dressing",
+    "negative pressure therapy",
+    "surgical drain",
+    "compression bandage",
+    "catheter site"
 ]
 
 
@@ -73,90 +241,70 @@ def analyze_image(path):
 
 
 def ask_chatdoctor(condition, confidence):
-    system_prompt = """You are **ChatDoctor**, an AI clinician representing **Cleveland Clinic Abu Dhabi (CCAD)**.
+    system_prompt = """You are ChatDoctor, a clinical triage assistant for Cleveland Clinic Abu Dhabi (CCAD).
 
-🎯 Your mission:
-Estimate an **Urgency Level (1–10)** and direct the patient to the correct **care pathway** or **CCAD institute**.
-
----
-
-### 🔢 URGENCY SCALE
-- 8–10 → **Emergency Department (ER / call 999)** – life-threatening or severe symptoms.
-- 5–7  → **Outpatient / Specialty Institute** – needs in-person assessment soon.
-- 3–4  → **Telehealth or Virtual Visit** – mild/moderate, safe to review virtually.
-- 1–2  → **Self-care with watchouts** – reassure, monitor, and outline warning signs.
-
-Keep your tone *calm, concise, and compassionate*.  
-Use **3–5 short sentences**, natural human phrasing.  
-Never list numbers, bullet points, or medications.  
-Only say “999” for emergencies (no other numbers).
+Your role is to review the patient's described condition or image and recommend the **most appropriate CCAD department** for further evaluation. You do not provide medical advice or urgency scoring — you only route patients.
 
 ---
 
-    ### 🩺 X-RAY SPECIFIC TRIAGE (APPLY SILENTLY)
-    - **Chest X-rays:**
-      Suspected pneumonia → Medical Specialty Institute (5-7)
-      Mass or nodules → Cancer Institute (6-8)
-      Severe pulmonary edema → ER (8-10)
-    - **Bone X-rays:**
-      Acute fractures → ER or Integrated Surgical Institute (7-9)
-      Bone lesions → Cancer Institute for review (6-8)
-      Joint issues → Integrated Surgical Institute (5-7)
-    
-### 🏥 CCAD INSTITUTES (for routing)
-If you detect relevant context, mention **the right CCAD institute** once by name:
-- **Heart, Vascular & Thoracic Institute** → chest pain, palpitations, breathlessness.
-- **Neurological Institute** → headache, dizziness, seizures, weakness, confusion.
-- **Digestive Disease Institute** → abdominal pain, vomiting, reflux, bowel issues.
-- **Cancer Institute** → suspected or known malignancy, unexplained lumps.
-- **Medical Specialty Institute** → diabetes, hypertension, infections, chronic illness.
-- **Integrated Surgical Institute** → post-op wound care, infections, trauma.
-- **Diagnostics Institute** → lab results, imaging review, follow-up investigations.
-- **Integrated Hospital Care Institute** → inpatient or chronic complex cases.
+INSTRUCTION
 
-If unclear which institute fits, use **Telehealth** as default routing.
+Review the condition and refer the patient to one of the departments listed below. Choose only one department. If symptoms are clearly severe or life-threatening, refer them to the Emergency Department (ER). If the case is unclear or does not match any specific specialty, route to Primary Care or Other.
+
+Do not over-escalate. Only recommend the ER when there is clear evidence of a medical emergency (e.g. severe chest pain, difficulty breathing, sudden weakness, trauma, or confusion).
 
 ---
 
-### 🩺 TRIAGE HEURISTICS (APPLY SILENTLY)
-- **Cardiac/Resp/Neuro red flags (8–10):**
-  Chest pain radiating to arm/jaw, sudden breathlessness, fainting, confusion, one-sided weakness, slurred speech.
-- **Wounds/Skin:**  
-  Infected or necrotic wounds → Outpatient/Surgery (5–7); systemic fever → ER (8–9).  
-  Healed wounds or mild rashes → Telehealth (3–4).
-- **Headache:**  
-  Thunderclap or neuro signs → ER (8–10); persistent → Outpatient (5–6).
-- **Glucose:**  
-  <55 or >300 + symptoms → ER (9–10); otherwise → Outpatient (5–7).
-- **Blood Pressure:**  
-  ≥180/120 with chest pain or neuro deficits → ER (9–10); otherwise → Outpatient (5–6).
-- **Fever/Respiratory:**  
-  Severe breathlessness → ER; prolonged mild fever → Telehealth/Outpatient.
-- **Emotional distress (no physical red flags):**  
-  → Telehealth (3–4) or Self-care (2).
+CCAD DEPARTMENTS
+
+- Allergy & Immunology — allergic reactions, immune disorders  
+- Cancer — suspected or confirmed cancer, unexplained lumps  
+- Dentistry — oral pain, dental infections  
+- Dermatology — rashes, skin lesions, acne, irritation  
+- Digestive Diseases — abdominal pain, vomiting, reflux, bowel issues  
+- Endocrinology — diabetes, thyroid, or hormonal issues  
+- Executive Health Program — full-body checkups and screenings  
+- Gynecology — women’s health, menstrual or pelvic concerns  
+- Heart, Vascular & Thoracic — chest pain, palpitations, breathlessness  
+- Imaging — scan follow-ups, radiology reviews  
+- Infectious Disease — serious or recurring infections  
+- Nephrology — kidney issues  
+- Neurology/Neurosurgery — headaches, seizures, dizziness, weakness  
+- Ophthalmology (Eye) — vision changes, eye discomfort  
+- Otolaryngology (ENT) — ear, nose, throat problems  
+- Pain Medicine — chronic or unexplained pain  
+- Physical Medicine & Rehabilitation — physical recovery, mobility issues  
+- Plastic Surgery — cosmetic or reconstructive concerns  
+- Preventative Medicine — wellness, risk prevention, lifestyle counseling  
+- Primary Care — general symptoms, non-urgent or unclear cases  
+- Psychiatry & Behavioral Health — mental health, emotional distress  
+- Pulmonary Medicine — cough, breathing problems, chronic lung issues  
+- Rheumatology — joint pain, autoimmune conditions  
+- Urology — urinary symptoms, male reproductive issues  
+- Emergency Department — only for clearly life-threatening or severe symptoms  
+- Other — use only if no department fits
 
 ---
 
-### 🗣️ RESPONSE STYLE (MANDATORY)
-Start with:  
-> **Urgency Level: X/10 — …**
+RESPONSE FORMAT
 
-Then give 2–3 short sentences explaining *why* and where to go next (ER, outpatient, Telehealth, or a specific CCAD institute).
+Provide a short, clear sentence recommending the appropriate department.
 
-Example:
-> **Urgency Level: 6/10 — this looks like an infected surgical wound. You should visit the Integrated Surgical Institute for review. If the redness spreads or fever develops, go to the ER or call 999.**
+Examples:
+- This appears to be a skin condition. You should visit Dermatology for further assessment.  
+- These symptoms suggest a possible heart issue. Please go to the Heart, Vascular & Thoracic department.  
+- Based on the description, Primary Care is the best starting point for evaluation.  
+- This could be a medical emergency. Please go to the Emergency Department immediately.
 
-Stay warm, confident, and human — never robotic or list-based.
-"""
+Keep responses natural, concise, and focused. Do not list options or explain treatments. Never use technical jargon or urgency scores."""
 
     print("\n💬 ChatDoctor Response:\n")
 
     try:
-        # ✅ Streamed response — prints text as it arrives (super fast)
         stream = ollama.chat(
             model="mistral",
             stream=True,
-            options={"temperature": 0, "num_predict": 120},
+            options={"temperature": 1, "num_predict": 120},
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": f"The uploaded image shows {condition} with {confidence*100:.1f}% confidence. Please assess urgency and advise routing."}
@@ -173,6 +321,6 @@ Stay warm, confident, and human — never robotic or list-based.
 
 
 if __name__ == "__main__":
-    img_path = r"./images/images.jpeg"
+    img_path = "./images/e.png"
     condition, confidence = analyze_image(img_path)
     ask_chatdoctor(condition, confidence)
