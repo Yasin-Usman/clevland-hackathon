@@ -112,8 +112,8 @@ export function Chat({ id, initialMessages, className }: ChatProps) {
 
   return (
     <>
-      {console.log('💬 Chat rendered')}
-      {/* <Header onReset={handleReset} /> */}
+      
+      <Header onReset={handleReset} />
       <div className={cn('pb-[200px] pt-4 md:pt-10', className)}>
         {messages.length ? (
           <>
