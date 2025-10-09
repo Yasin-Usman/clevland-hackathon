@@ -1,0 +1,16 @@
+[
+  {
+    "appointment_id": "APT20251009074118",
+    "patient_name": "Test Patient JSON",
+    "patient_email": "testjson@example.com",
+    "patient_phone": "1234567890",
+    "institute": "Digestive Disease Institute",
+    "department": "Gastroenterology",
+    "doctor_name": "Abdul Sattar, MD",
+    "appointment_date": "2024-01-15",
+    "appointment_time": "09:00",
+    "reason": "Test JSON appointment",
+    "status": "confirmed",
+    "created_at": "2025-10-09T07:41:18.082792"
+  }
+]
