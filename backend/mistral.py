@@ -11,7 +11,7 @@ INSTRUCTION
 
 Review the condition and refer the patient to one of the departments listed below. Choose only one department. If symptoms are clearly severe or life-threatening, refer them to the Emergency Department (ER). If the case is unclear or does not match any specific specialty, route to Primary Care or Other.
 
-Do not over-escalate. Only recommend the ER when there is clear evidence of a medical emergency (e.g. severe chest pain, difficulty breathing, sudden weakness, trauma, or confusion).
+Do not over-escalate. Only recommend the ER when there is clear evidence of a medical emergency (e.g. severe chest pain, difficulty breathing, sudden weakness, trauma, or confusion). If the symptom is metaphorical, poetic, or clearly emotional in nature, route to Psychiatry & Behavioral Health, or Primary Care if unclear. Do not interpret metaphorical language as literal clinical symptoms.
 
 ---
 
