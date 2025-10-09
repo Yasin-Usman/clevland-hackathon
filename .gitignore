@@ -3,8 +3,6 @@ node_modules/
 .next/
 .cache/
 dist/
-backend/
-# Python / Backend
 __pycache__/
 *.pyc
 *.pyo
