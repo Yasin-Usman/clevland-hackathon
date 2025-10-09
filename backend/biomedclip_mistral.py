@@ -77,7 +77,7 @@ def ask_chatdoctor(condition, confidence):
 
 🎯 Your mission:
 Estimate an **Urgency Level (1–10)** and direct the patient to the correct **care pathway** or **CCAD institute**.
-
+ 
 ---
 
 ### 🔢 URGENCY SCALE
